@@ -1,11 +1,14 @@
 from fastapi import FastAPI ,HTTPException
+from app.schemas import PostCreate
 
 app = FastAPI
 text_posts = {
     
     "1":{"title":"New Post 1", "content": "cool test post 1"},
     "2":{"title":"New Post 2", "content": "cool test post 2"},
-    "3":{"title":"New Post 3", "content": "cool test post 3"}
+    "3":{"title":"New Post 3", "content": "cool test post 3"},
+    "4":{"title":"New Post 3", "content": "cool test post 4"}
+
 
               }
 
@@ -15,9 +18,9 @@ def root():
 
 
 @app.get("/post")
-def get_all_posts(limit: int=None):
+def get_all_posts(limit: int = None):
     if limit:
-        return text_posts[:limit]
+        return list(text_posts.values())[:limit]
     return text_posts
 
 
@@ -29,3 +32,6 @@ def get_post(id: int):
     
     return text_posts.get(id)
 
+@app.post("/posts")
+def create_post(post: PostCreate):
+    text_posts[max(text_posts.keys()) + 1] = {"title": post.title, "content":post.content}
