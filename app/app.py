@@ -1,14 +1,13 @@
 from fastapi import FastAPI ,HTTPException
 from app.schemas import PostCreate, PostResponse
 
-app = FastAPI
+app = FastAPI()
 text_posts = {
     
     "1":{"title":"New Post 1", "content": "cool test post 1"},
     "2":{"title":"New Post 2", "content": "cool test post 2"},
     "3":{"title":"New Post 3", "content": "cool test post 3"},
     "4":{"title":"New Post 3", "content": "cool test post 4"}
-
 
               }
 
