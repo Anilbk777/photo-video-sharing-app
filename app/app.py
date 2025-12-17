@@ -1,59 +1,61 @@
-from fastapi import FastAPI ,HTTPException ,Response
+from fastapi import FastAPI ,HTTPException ,Response, File, UploadFile, Form, Depends
 from app.schemas import PostCreate, PostResponse
 from app.db import Post, create_db_and_tables, get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
+from sqlalchemy import select
+
+from app.images import imagekit
+from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_db_and_tables()
     yield
 
-app = FastAPI()
-text_posts = {
+app = FastAPI(lifespan=lifespan)
+
+@app.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    caption:str = Form(""),
+    session: AsyncSession = Depends(get_async_session)
+):
+    post = Post(
+        caption = caption,
+        url = "dummy url",
+        file_type = "Photo",
+        file_name = "dummy name"
+    )
+    session.add(post)
+    await session.commit()
+    await session.refresh(post)
+    return post
+
+
+@app.get("/feed")
+async def get_feed(
+    session: AsyncSession = Depends(get_async_session),
+
+):
     
-    1:{"title":"New Post 1", "content": "cool test post 1"},
-    2:{"title":"New Post 2", "content": "cool test post 2"},
-    3:{"title":"New Post 3", "content": "cool test post 3"},
-    4:{"title":"New Post 3", "content": "cool test post 4"}
+    result = await session.execute(select(Post).order_by(Post.created_at.desc()))
 
-              }
+    posts = [row[0] for row in result.all()]
 
-@app.get("/")
-def root():
-    return {"message": "Hello FastAPI"}
+    posts_data = []
+    for post in posts:
+        posts_data.append(
+            {
+                "id":str(post.id),
+                "caption":post.caption,
+                "url":post.url,
+                "file_type":post.file_type,
+                "file_name":post.file_name,
+                "created_at": post.created_at.isoformat()
 
+            }
+        )
 
-@app.get("/post")
-def get_all_posts(limit: int = None):
-    if limit:
-        return list(text_posts.values())[:limit]
-    return text_posts
-
-
-@app.get("/posts/{id}")
-def get_post(id: int) -> PostResponse:
-
-    if id not in text_posts:
-        raise HTTPException(status_code=404, details="Post Not Found")
-    
-    return text_posts.get(id)
-
-@app.post("/posts")
-def create_post(post: PostCreate) -> PostResponse:
-    new_post = {"title": post.title, "content":post.content}
-    text_posts[max(text_posts.keys()) + 1] = new_post
-    return new_post
-  
-@app.delete("/posts/{id}")
-def delete_post(id:int):
-
-    if id not in text_posts.keys():
-        raise HTTPException(status_code=404, detail="Detail Not Found")
-   
-    text_posts.pop(id)
-
-    return Response(status_code=204)
-
-
-
+    return {"posts":posts_data}
