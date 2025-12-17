@@ -4,10 +4,10 @@ from app.schemas import PostCreate, PostResponse
 app = FastAPI()
 text_posts = {
     
-    "1":{"title":"New Post 1", "content": "cool test post 1"},
-    "2":{"title":"New Post 2", "content": "cool test post 2"},
-    "3":{"title":"New Post 3", "content": "cool test post 3"},
-    "4":{"title":"New Post 3", "content": "cool test post 4"}
+    1:{"title":"New Post 1", "content": "cool test post 1"},
+    2:{"title":"New Post 2", "content": "cool test post 2"},
+    3:{"title":"New Post 3", "content": "cool test post 3"},
+    4:{"title":"New Post 3", "content": "cool test post 4"}
 
               }
 
@@ -36,5 +36,15 @@ def create_post(post: PostCreate) -> PostResponse:
     new_post = {"title": post.title, "content":post.content}
     text_posts[max(text_posts.keys()) + 1] = new_post
     return new_post
+
+@app.delete("/posts/{id}")
+def delete_post(id:int):
+
+    if id not in text_posts.keys():
+        raise HTTPException(status_code=404, detail="Detail Not Found")
+   
+    text_posts.pop(id)
+
+    return text_posts
 
 
