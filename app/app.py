@@ -1,4 +1,4 @@
-from fastapi import FastAPI ,HTTPException
+from fastapi import FastAPI ,HTTPException ,Response
 from app.schemas import PostCreate, PostResponse
 
 app = FastAPI()
@@ -36,7 +36,7 @@ def create_post(post: PostCreate) -> PostResponse:
     new_post = {"title": post.title, "content":post.content}
     text_posts[max(text_posts.keys()) + 1] = new_post
     return new_post
-
+  
 @app.delete("/posts/{id}")
 def delete_post(id:int):
 
@@ -45,6 +45,7 @@ def delete_post(id:int):
    
     text_posts.pop(id)
 
-    return text_posts
+    return Response(status_code=204)
+
 
 
