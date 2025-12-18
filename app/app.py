@@ -9,6 +9,9 @@ from app.images import imagekit
 from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
 
 
+import shutil
+import os
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_db_and_tables()
