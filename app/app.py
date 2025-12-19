@@ -110,6 +110,8 @@ async def delete_post(post_id: str, session: AsyncSession = Depends(get_async_se
 
         return {"message": "Post deleted successfully"} 
 
-   
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid post ID")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
