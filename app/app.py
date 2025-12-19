@@ -5,8 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
 from sqlalchemy import select
 
-from app.images import imagekit
-from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
+import cloudinary.uploader
+# Import to trigger configuration
+import app.images 
 
 
 import shutil
@@ -34,26 +35,26 @@ async def upload_file(
     temp_file_path = None
 
     try:
-        with templfile.NameTemporaryFile(
+        with tempfile.NamedTemporaryFile(
             delete=False, suffix=os.path.splitext(file.filename)[1]
         ) as temp_file:
             temp_file_path = temp_file.name
             shutil.copyfileobj(file.file, temp_file)
-        upload_result = imagekit.upload_file(
-            file=open(temp_file_path, "rb"),
-            file_name=file.filename,
-            options=UploadFileRequestOptions(
-                use_unique_file_name=True, tags=["backend-upload"]
-            ),
-        )
+        with open(temp_file_path, "rb") as file_to_upload:
+            upload_result = cloudinary.uploader.upload(
+                file_to_upload,
+                resource_type="auto",
+                use_filename=True,
+                unique_filename=True,
+                tags=["backend-upload"]
+            )
 
-        if upload_result.response.http_status_code == 200:
-
+        if upload_result:
             post = Post(
                 caption=caption,
-                url=upload_result.url,
-                file_type="Video" if file.content_type.startswith("video/") else "image",
-                file_name=upload_result.name
+                url=upload_result.get("secure_url"),
+                file_type=upload_result.get("resource_type"),
+                file_name=upload_result.get("original_filename", file.filename)
             )
             session.add(post)
             await session.commit()
