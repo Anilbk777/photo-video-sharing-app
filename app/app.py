@@ -101,3 +101,15 @@ async def delete_post(post_id: str, session: AsyncSession = Depends(get_async_se
 
         result = await session.execute(select(Post).where(Post.id == post_uuid))
         post = result.scalar().first()
+
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+
+        await session.delete(post)
+        await session.commit()
+
+        return {"message": "Post deleted successfully"} 
+
+   
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
